@@ -526,7 +526,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 		$lines = explode("\n", trim($init->body));
 		$init->body = NULL;
 		while (($line = array_shift($lines)) || $lines) {
-			if (!$foundSessionStart && stripos($line, 'session->start(') !== FALSE) {
+			if (!$foundSessionStart && (stripos($line, 'session->start(') !== FALSE || stripos($line, 'Nette\Http\Session")->start(') !== FALSE)) {
 				$lines[] = $line;
 				$foundSessionStart = TRUE;
 				continue;
