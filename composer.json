@@ -21,12 +21,12 @@
 		"doctrine/orm": "~2.5",
 		"doctrine/dbal": "~2.5",
 		"kdyby/events": "^3.1.1",
-		"kdyby/console": "^2.7.1",
+		"kdyby/console": "~2.7.1",
 		"kdyby/annotations": "^2.4@dev",
 		"kdyby/doctrine-cache": "^2.6.1",
 		"kdyby/strict-objects": "^1.0",
 		"nette/di": "^2.4@dev",
-		"nette/utils": "^2.5@dev",
+		"nette/utils": "^2.5",
 		"nette/finder": "2.5.1"
 	},
 	"require-dev": {
