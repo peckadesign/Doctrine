@@ -27,7 +27,7 @@
 		"kdyby/strict-objects": "^1.0",
 		"nette/di": "^2.4@dev",
 		"nette/utils": "^2.5",
-		"nette/finder": "2.5.1"
+		"nette/finder": "^2.5"
 	},
 	"require-dev": {
 		"nette/bootstrap": "^2.4@dev",
