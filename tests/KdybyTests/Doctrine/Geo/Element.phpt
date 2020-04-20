@@ -42,7 +42,7 @@ class ElementTest extends Tester\TestCase
 	{
 		$element = Element::fromString(self::TEST_VALUE);
 		/** @var \ReflectionProperty $property */
-		$property = $element->getReflection()->getProperty("stringValue");
+		$property = new \ReflectionProperty($element, 'stringValue');
 		$property->setAccessible(TRUE);
 
 		Assert::type("string", $property->getValue($element));
@@ -57,7 +57,7 @@ class ElementTest extends Tester\TestCase
 	{
 		$element = Element::fromString(self::TEST_VALUE);
 		/** @var \ReflectionProperty $property */
-		$property = $element->getReflection()->getProperty("stringValue");
+		$property = new \ReflectionProperty($element, 'stringValue');
 		$property->setAccessible(TRUE);
 
 		$element->getName();
@@ -75,7 +75,7 @@ class ElementTest extends Tester\TestCase
 	{
 		$element = Element::fromString(self::TEST_VALUE);
 		/** @var \ReflectionProperty $property */
-		$property = $element->getReflection()->getProperty("stringValue");
+		$property = new \ReflectionProperty($element, 'stringValue');
 		$property->setAccessible(TRUE);
 
 		$element2 = clone $element;
@@ -84,8 +84,21 @@ class ElementTest extends Tester\TestCase
 		Assert::type("string", $property->getValue($element2));
 	}
 
+
+
+	public function testLongStringValue()
+	{
+		$stringValue = 'POLYGON((50.1049501 14.4862063' . str_repeat(', 50.1049501 14.4862063', 100000) . '))';
+		$element = Element::fromString($stringValue);
+
+		Assert::noError(function () use ($element) {
+			// force string validation
+			$element->freeze();
+		});
+	}
+
 }
 
 
 
-\run(new ElementTest());
+(new ElementTest())->run();

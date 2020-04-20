@@ -11,7 +11,7 @@ that you'll be adding more and more functionality to the class and eventually en
 You probably don't wanna write such a monster, so do yourself a favour and instead of extending the `EntityRepository` wrap it in a new class.
 
 ```php
-class MyArticlesCustomLogic extends Nette\Object
+class MyArticlesCustomLogic
 {
 	private $em;
 	private $articles;
@@ -64,6 +64,10 @@ You can even order by relations
 ```php
 $commentsRepository->findBy([], ['article.title' => 'DESC']);
 ```
+Or you can order by SQL function
+```php
+$commentsRepository->findBy([], ['COUNT(article.id)' => 'DESC']);
+```
 
 If you wanna checkout all the supported syntaxes, have a look at all the `whereCriteria` tests in the [QueryBuilderTest](https://github.com/Kdyby/Doctrine/blob/master/tests/KdybyTests/Doctrine/QueryBuilder.phpt).
 
@@ -73,13 +77,13 @@ If you wanna checkout all the supported syntaxes, have a look at all the `whereC
 Works the same as `findBy()`, except it returns only the first result.
 
 
-### `->countBy(array $criteria = array())`
+### `->countBy(array $criteria = [])`
 
 
 If you need to just count the entities, you can use this method, that accepts the same criteria structure as `findBy()`.
 
 
-### `->findPairs($criteria, $value = NULL, $orderBy = array(), $key = NULL)`
+### `->findPairs($criteria, $value = NULL, $orderBy = [], $key = NULL)`
 
 Sometimes it's handy to fetch array of some values, indexed by some keys. It's great for form selects.
 

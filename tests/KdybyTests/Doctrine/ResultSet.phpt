@@ -31,7 +31,7 @@ class ResultSetTest extends KdybyTests\Doctrine\ORMTestCase
 
 	public function testCount()
 	{
-		$em = $this->createMemoryManager();
+		$em = $this->createMemoryManagerWithSchema();
 
 		$user1 = new CmsUser();
 		$user1->username = 'HosipLan';
@@ -62,7 +62,7 @@ class ResultSetTest extends KdybyTests\Doctrine\ORMTestCase
 		$em->persist($phone2);
 		$em->flush();
 
-		$query = $em->getDao(__NAMESPACE__ . '\CmsUser')->createQueryBuilder("u")
+		$query = $em->getRepository(\KdybyTests\Doctrine\CmsUser::class)->createQueryBuilder("u")
 			->leftJoin("u.phoneNumbers", "p")->addSelect("p")
 			->getQuery();
 		$resultSet = new ResultSet($query);
@@ -82,9 +82,9 @@ class ResultSetTest extends KdybyTests\Doctrine\ORMTestCase
 
 	public function testClearSorting()
 	{
-		$basicSelect = "SELECT u\n FROM " . __NAMESPACE__ . '\CmsUser u';
+		$basicSelect = sprintf("SELECT u\n FROM %s u", \KdybyTests\Doctrine\CmsUser::class);
 
-		$query = new Doctrine\ORM\Query($this->createMemoryManager());
+		$query = new Doctrine\ORM\Query($this->createMemoryManagerWithSchema());
 		$resultSet = new ResultSet($query);
 
 		$query->setDQL($basicSelect);
@@ -104,14 +104,14 @@ class ResultSetTest extends KdybyTests\Doctrine\ORMTestCase
 
 	public function testApplySorting()
 	{
-		$query = new Doctrine\ORM\Query($this->createMemoryManager());
-		$query->setDQL($basicSelect = "SELECT u\n FROM " . __NAMESPACE__ . '\CmsUser u');
+		$query = new Doctrine\ORM\Query($this->createMemoryManagerWithSchema());
+		$query->setDQL($basicSelect = sprintf("SELECT u\n FROM %s u", \KdybyTests\Doctrine\CmsUser::class));
 		$resultSet = new ResultSet($query);
 
 		$resultSet->applySorting('u.name ASC');
 		Assert::same($basicSelect . ' ORDER BY u.name ASC', $query->getDQL());
 
-		$resultSet->applySorting(array('u.status' => 'DESC'));
+		$resultSet->applySorting(['u.status' => 'DESC']);
 		Assert::same($basicSelect . ' ORDER BY u.name ASC, u.status DESC', $query->getDQL());
 
 		$query->setDQL($basicSelect);
@@ -124,9 +124,9 @@ class ResultSetTest extends KdybyTests\Doctrine\ORMTestCase
 
 	public function testClearSorting_subquery()
 	{
-		$basicSelect = "SELECT u,\n (SELECT a FROM " . __NAMESPACE__ . '\CmsArticle ORDER BY a.topic ASC) FROM ' . __NAMESPACE__ . '\CmsUser u';
+		$basicSelect = sprintf("SELECT u,\n (SELECT a FROM %s a ORDER BY a.topic ASC) FROM %s u", \KdybyTests\Doctrine\CmsArticle::class, \KdybyTests\Doctrine\CmsUser::class);
 
-		$query = new Doctrine\ORM\Query($this->createMemoryManager());
+		$query = new Doctrine\ORM\Query($this->createMemoryManagerWithSchema());
 		$resultSet = new ResultSet($query);
 
 		$query->setDQL($basicSelect);
@@ -146,14 +146,14 @@ class ResultSetTest extends KdybyTests\Doctrine\ORMTestCase
 
 	public function testApplySorting_subquery()
 	{
-		$query = new Doctrine\ORM\Query($this->createMemoryManager());
-		$query->setDQL($basicSelect = "SELECT u,\n (SELECT a FROM " . __NAMESPACE__ . '\CmsArticle ORDER BY a.topic ASC) FROM ' . __NAMESPACE__ . '\CmsUser u');
+		$query = new Doctrine\ORM\Query($this->createMemoryManagerWithSchema());
+		$query->setDQL($basicSelect = sprintf("SELECT u,\n (SELECT a FROM %s a ORDER BY a.topic ASC) FROM %s u", \KdybyTests\Doctrine\CmsArticle::class, \KdybyTests\Doctrine\CmsUser::class));
 		$resultSet = new ResultSet($query);
 
 		$resultSet->applySorting('u.name ASC');
 		Assert::same($basicSelect . ' ORDER BY u.name ASC', $query->getDQL());
 
-		$resultSet->applySorting(array('u.status' => 'DESC'));
+		$resultSet->applySorting(['u.status' => 'DESC']);
 		Assert::same($basicSelect . ' ORDER BY u.name ASC, u.status DESC', $query->getDQL());
 
 		$query->setDQL($basicSelect);
@@ -166,4 +166,4 @@ class ResultSetTest extends KdybyTests\Doctrine\ORMTestCase
 
 
 
-\run(new ResultSetTest());
+(new ResultSetTest())->run();

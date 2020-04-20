@@ -42,7 +42,7 @@ class ArticlesQuery extends QueryObject
 
     return $qb;
   }
-  
+
   // ...
 ```
 
@@ -61,7 +61,7 @@ class ArticlesQuery extends QueryObject
     $repository->createQueryBuilder()
       ->select('partial article.{id}')->from(Article::class, 'article')
       ->leftJoin('article.comments', 'comments')->addSelect('comments')
-      ->andWhere('article.id IN :ids')->setParameter('ids', $ids)
+      ->andWhere('article.id IN (:ids)')->setParameter('ids', $ids)
       ->getQuery()->getResult();
   }
 
@@ -85,4 +85,3 @@ It will only initialize the joined collection for each one of those articles.
 
 What this gives us? We now have the same result set as from the first query, but this time we've sent two SQL queries to the database,
 of which both transmitted **a lot** less data and the hydrator was able to process it much faster, making our application faster.
-

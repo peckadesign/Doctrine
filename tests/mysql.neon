@@ -1,0 +1,6 @@
+doctrine:
+	host: mysql
+	user: root
+	password: ""
+	charset: UTF8
+	driver: pdo_mysql

@@ -38,7 +38,7 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 
 	protected function setUp()
 	{
-		$this->em = $this->createMemoryManager();
+		$this->em = $this->createMemoryManagerWithSchema();
 	}
 
 
@@ -46,12 +46,12 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testSelect()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsUser', 'e')
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsUser::class, 'e')
 			->where('e.name = ' . $qb->createNamedParameter('Filip'));
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_users e WHERE e.name = :dcValue1', array('dcValue1' => 'Filip'), $qb->getQuery());
+		self::assertQuery('SELECT e.* FROM cms_users e WHERE e.name = :dcValue1', ['dcValue1' => 'Filip'], $qb->getQuery());
 	}
 
 
@@ -59,15 +59,15 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testSubSelect()
 	{
 		$subQueryBuilder = new NativeQueryBuilder($this->em);
-		$subQueryBuilder->select('a.id')->from(__NAMESPACE__ . '\\CmsAddress', 'a');
+		$subQueryBuilder->select('a.id')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a');
 
 		$qb = new NativeQueryBuilder($this->em);
 		$qb->select('e.id')
 			->addSelect($subQueryBuilder, 'e.name')
-			->from(__NAMESPACE__ . '\\CmsUser', 'e');
+			->from(\KdybyTests\Doctrine\CmsUser::class, 'e');
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
-		self::assertQuery('SELECT e.id, (SELECT a.id FROM cms_addresses a), e.name FROM cms_users e', array(), $qb->getQuery());
+		self::assertQuery('SELECT e.id, (SELECT a.id FROM cms_addresses a), e.name FROM cms_users e', [], $qb->getQuery());
 	}
 
 
@@ -75,12 +75,12 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_Where()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
 			->where("a.user = :username", 'Filip');
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a WHERE a.user = :username', array('username' => 'Filip'), $qb->getQuery());
+		self::assertQuery('SELECT e.* FROM cms_addresses a WHERE a.user = :username', ['username' => 'Filip'], $qb->getQuery());
 	}
 
 
@@ -88,16 +88,16 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_Where_MultipleParameters()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
-			->where("a.user = :username AND a.city = ?2 AND a.id IN (:ids)", 'Filip', 'Brno', array(1, 2, 3));
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
+			->where("a.user = :username AND a.city = ?2 AND a.id IN (:ids)", 'Filip', 'Brno', [1, 2, 3]);
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a WHERE a.user = :username AND a.city = ?2 AND a.id IN (:ids)', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a WHERE a.user = :username AND a.city = ?2 AND a.id IN (:ids)', [
 			'username' => 'Filip',
 			2 => 'Brno',
-			'ids' => array(1, 2, 3),
-		), $qb->getQuery());
+			'ids' => [1, 2, 3],
+		], $qb->getQuery());
 	}
 
 
@@ -105,16 +105,16 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_Where_MultipleConditions()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
-			->where("a.user = :username AND a.city = ?2", 'Filip', 'Brno', "a.id IN (:ids)", array(1, 2, 3));
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
+			->where("a.user = :username AND a.city = ?2", 'Filip', 'Brno', "a.id IN (:ids)", [1, 2, 3]);
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a WHERE (a.user = :username AND a.city = ?2) AND (a.id IN (:ids))', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a WHERE (a.user = :username AND a.city = ?2) AND (a.id IN (:ids))', [
 			'username' => 'Filip',
 			2 => 'Brno',
-			'ids' => array(1, 2, 3),
-		), $qb->getQuery());
+			'ids' => [1, 2, 3],
+		], $qb->getQuery());
 	}
 
 
@@ -122,14 +122,14 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_Join()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
 			->join('a', 'cms_users', 'u', 'a.city = :city_name', 'Brno');
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.city = :city_name', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.city = :city_name', [
 			'city_name' => 'Brno',
-		), $qb->getQuery());
+		], $qb->getQuery());
 	}
 
 
@@ -137,14 +137,14 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_Join_WithIndexBy()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
 			->join('a', 'cms_users', 'u', 'a.city = :city_name', 'Brno');
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.city = :city_name', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.city = :city_name', [
 			'city_name' => 'Brno',
-		), $qb->getQuery());
+		], $qb->getQuery());
 	}
 
 
@@ -152,16 +152,16 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_Join_MultipleParameters()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
-			->join('a', 'cms_users', 'u', "a.user = :username AND a.city = ?2 AND a.id IN (:ids)", 'Filip', 'Brno', array(1, 2, 3));
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
+			->join('a', 'cms_users', 'u', "a.user = :username AND a.city = ?2 AND a.id IN (:ids)", 'Filip', 'Brno', [1, 2, 3]);
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.user = :username AND a.city = ?2 AND a.id IN (:ids)', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.user = :username AND a.city = ?2 AND a.id IN (:ids)', [
 			'username' => 'Filip',
 			2 => 'Brno',
-			'ids' => array(1, 2, 3),
-		), $qb->getQuery());
+			'ids' => [1, 2, 3],
+		], $qb->getQuery());
 	}
 
 
@@ -169,16 +169,16 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_Join_MultipleParameters_WithIndexBy()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
-			->join('a', 'cms_users', 'u', "a.user = :username AND a.city = ?2 AND a.id IN (:ids)", 'Filip', 'Brno', array(1, 2, 3));
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
+			->join('a', 'cms_users', 'u', "a.user = :username AND a.city = ?2 AND a.id IN (:ids)", 'Filip', 'Brno', [1, 2, 3]);
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.user = :username AND a.city = ?2 AND a.id IN (:ids)', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.user = :username AND a.city = ?2 AND a.id IN (:ids)', [
 			'username' => 'Filip',
 			2 => 'Brno',
-			'ids' => array(1, 2, 3),
-		), $qb->getQuery());
+			'ids' => [1, 2, 3],
+		], $qb->getQuery());
 	}
 
 
@@ -186,14 +186,14 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_InnerJoin()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
 			->innerJoin('a', 'cms_users', 'u', 'a.city = :city_name', 'Brno');
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.city = :city_name', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a INNER JOIN cms_users u ON a.city = :city_name', [
 			'city_name' => 'Brno',
-		), $qb->getQuery());
+		], $qb->getQuery());
 	}
 
 
@@ -201,14 +201,14 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_LeftJoin()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
 			->leftJoin('a', 'cms_users', 'u', 'a.city = :city_name', 'Brno');
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a LEFT JOIN cms_users u ON a.city = :city_name', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a LEFT JOIN cms_users u ON a.city = :city_name', [
 			'city_name' => 'Brno',
-		), $qb->getQuery());
+		], $qb->getQuery());
 	}
 
 
@@ -216,14 +216,14 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	public function testInlineParameters_RightJoin()
 	{
 		$qb = new NativeQueryBuilder($this->em);
-		$qb->select('e.*')->from(__NAMESPACE__ . '\\CmsAddress', 'a')
+		$qb->select('e.*')->from(\KdybyTests\Doctrine\CmsAddress::class, 'a')
 			->rightJoin('a', 'cms_users', 'u', 'a.city = :city_name', 'Brno');
 
 		$qb->getResultSetMapper()->addScalarResult('id', 'id');
 
-		self::assertQuery('SELECT e.* FROM cms_addresses a LEFT JOIN cms_users u ON a.city = :city_name', array(
+		self::assertQuery('SELECT e.* FROM cms_addresses a LEFT JOIN cms_users u ON a.city = :city_name', [
 			'city_name' => 'Brno',
-		), $qb->getQuery());
+		], $qb->getQuery());
 	}
 
 
@@ -232,7 +232,7 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 	{
 		Assert::same($expectedDql, $query->getSQL());
 
-		$actualParameters = array();
+		$actualParameters = [];
 		foreach ($query->getParameters() as $key => $value) {
 			if ($value instanceof Doctrine\ORM\Query\Parameter) {
 				$actualParameters[$value->getName()] = $value->getValue();
@@ -245,4 +245,4 @@ class NativeQueryBuilderTest extends KdybyTests\Doctrine\ORMTestCase
 
 }
 
-\run(new NativeQueryBuilderTest());
+(new NativeQueryBuilderTest())->run();

@@ -36,19 +36,19 @@ class GeometryTypeTest extends Tester\TestCase
 
 	protected function setUp()
 	{
-		$this->polygon = Code\Helpers::createObject('Kdyby\Doctrine\Types\Polygon', array());
+		$this->polygon = Code\Helpers::createObject(\Kdyby\Doctrine\Types\Polygon::class, []);
 	}
 
 
 
 	public function testInheritance()
 	{
-		Assert::true(is_subclass_of('Kdyby\Doctrine\Types\GeometryCollection', 'Kdyby\Doctrine\Types\GeometryType'));
-		Assert::true(is_subclass_of('Kdyby\Doctrine\Types\LineString', 'Kdyby\Doctrine\Types\GeometryType'));
-		Assert::true(is_subclass_of('Kdyby\Doctrine\Types\MultiLineString', 'Kdyby\Doctrine\Types\GeometryType'));
-		Assert::true(is_subclass_of('Kdyby\Doctrine\Types\MultiPolygon', 'Kdyby\Doctrine\Types\GeometryType'));
-		Assert::true(is_subclass_of('Kdyby\Doctrine\Types\Point', 'Kdyby\Doctrine\Types\GeometryType'));
-		Assert::true(is_subclass_of('Kdyby\Doctrine\Types\Polygon', 'Kdyby\Doctrine\Types\GeometryType'));
+		Assert::true(is_subclass_of(\Kdyby\Doctrine\Types\GeometryCollection::class, \Kdyby\Doctrine\Types\GeometryType::class));
+		Assert::true(is_subclass_of(\Kdyby\Doctrine\Types\LineString::class, \Kdyby\Doctrine\Types\GeometryType::class));
+		Assert::true(is_subclass_of(\Kdyby\Doctrine\Types\MultiLineString::class, \Kdyby\Doctrine\Types\GeometryType::class));
+		Assert::true(is_subclass_of(\Kdyby\Doctrine\Types\MultiPolygon::class, \Kdyby\Doctrine\Types\GeometryType::class));
+		Assert::true(is_subclass_of(\Kdyby\Doctrine\Types\Point::class, \Kdyby\Doctrine\Types\GeometryType::class));
+		Assert::true(is_subclass_of(\Kdyby\Doctrine\Types\Polygon::class, \Kdyby\Doctrine\Types\GeometryType::class));
 	}
 
 
@@ -88,4 +88,4 @@ class GeometryTypeTest extends Tester\TestCase
 
 }
 
-\run(new GeometryTypeTest());
+(new GeometryTypeTest())->run();

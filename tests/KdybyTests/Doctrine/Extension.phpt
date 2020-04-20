@@ -28,17 +28,15 @@ class ExtensionTest extends Tester\TestCase
 
 	/**
 	 * @param string $configFile
-	 * @return \SystemContainer|Nette\DI\Container
+	 * @return Nette\DI\Container
 	 */
 	public function createContainer($configFile)
 	{
-		require_once __DIR__ . '/models/cms.php';
-
 		$config = new Nette\Configurator();
 		$config->setTempDirectory(TEMP_DIR);
-		$config->addParameters(array('container' => array('class' => 'SystemContainer_' . md5($configFile))));
-		$config->addParameters(array('appDir' => $rootDir = __DIR__ . '/..', 'wwwDir' => $rootDir));
-		$config->addConfig(__DIR__ . '/../nette-reset.neon', !isset($config->defaultExtensions['nette']) ? 'v23' : 'v22');
+		$config->addParameters(['container' => ['class' => 'SystemContainer_' . md5($configFile)]]);
+		$config->addParameters(['appDir' => $rootDir = __DIR__ . '/..', 'wwwDir' => $rootDir]);
+		$config->addConfig(__DIR__ . '/../nette-reset.neon');
 		$config->addConfig(__DIR__ . '/config/' . $configFile . '.neon');
 
 		return $config->createContainer();
@@ -51,10 +49,10 @@ class ExtensionTest extends Tester\TestCase
 		$container = $this->createContainer('memory');
 
 		/** @var Kdyby\Doctrine\EntityManager $default */
-		$default = $container->getByType('Kdyby\Doctrine\EntityManager');
+		$default = $container->getByType(\Kdyby\Doctrine\EntityManager::class);
 		Assert::true($default instanceof Kdyby\Doctrine\EntityManager);
 
-		$userDao = $default->getDao('KdybyTests\Doctrine\CmsUser');
+		$userDao = $default->getRepository(\KdybyTests\Doctrine\CmsUser::class);
 		Assert::true($userDao instanceof Kdyby\Doctrine\EntityDao);
 	}
 
@@ -65,7 +63,7 @@ class ExtensionTest extends Tester\TestCase
 		$container = $this->createContainer('multiple-connections');
 
 		/** @var Kdyby\Doctrine\EntityManager $default */
-		$default = $container->getByType('Kdyby\Doctrine\EntityManager');
+		$default = $container->getByType(\Kdyby\Doctrine\EntityManager::class);
 		Assert::true($default instanceof Kdyby\Doctrine\EntityManager);
 		Assert::same($container->getService('kdyby.doctrine.default.entityManager'), $default);
 
@@ -80,31 +78,135 @@ class ExtensionTest extends Tester\TestCase
 		$container = $this->createContainer('memory');
 
 		/** @var Kdyby\Doctrine\EntityManager $default */
-		$default = $container->getByType('Kdyby\Doctrine\EntityManager');
+		$default = $container->getByType(\Kdyby\Doctrine\EntityManager::class);
 		$entityClasses = array_map(function (ClassMetadata $class) {
 			return $class->getName();
 		}, $default->getMetadataFactory()->getAllMetadata());
 
 		sort($entityClasses);
 
-		Assert::same(array(
-			'KdybyTests\\Doctrine\\AnnotationDriver\\App\\Bar',
-			'KdybyTests\\Doctrine\\AnnotationDriver\\App\\FooEntity',
-			'KdybyTests\\Doctrine\\AnnotationDriver\\Something\\Baz',
-			'KdybyTests\\Doctrine\\CmsAddress',
-			'KdybyTests\\Doctrine\\CmsArticle',
-			'KdybyTests\\Doctrine\\CmsComment',
-			'KdybyTests\\Doctrine\\CmsEmail',
-			'KdybyTests\\Doctrine\\CmsEmployee',
-			'KdybyTests\\Doctrine\\CmsGroup',
-			'KdybyTests\\Doctrine\\CmsOrder',
-			'KdybyTests\\Doctrine\\CmsPhoneNumber',
-			'KdybyTests\\Doctrine\\CmsUser',
-			'Kdyby\\Doctrine\\Entities\\BaseEntity',
-			'Kdyby\\Doctrine\\Entities\\IdentifiedEntity',
-		), $entityClasses);
+		Assert::same([
+			\KdybyTests\Doctrine\CmsAddress::class,
+			\KdybyTests\Doctrine\CmsArticle::class,
+			\KdybyTests\Doctrine\CmsComment::class,
+			\KdybyTests\Doctrine\CmsEmail::class,
+			\KdybyTests\Doctrine\CmsEmployee::class,
+			\KdybyTests\Doctrine\CmsGroup::class,
+			\KdybyTests\Doctrine\CmsOrder::class,
+			\KdybyTests\Doctrine\CmsPhoneNumber::class,
+			\KdybyTests\Doctrine\CmsUser::class,
+			\KdybyTests\Doctrine\ReadOnlyEntity::class,
+			\KdybyTests\Doctrine\StiAdmin::class,
+			\KdybyTests\Doctrine\StiBoss::class,
+			\KdybyTests\Doctrine\StiEmployee::class,
+			\KdybyTests\Doctrine\StiUser::class,
+			\Kdyby\Doctrine\Entities\BaseEntity::class,
+			\Kdyby\Doctrine\Entities\IdentifiedEntity::class,
+		], $entityClasses);
+	}
+
+
+
+	public function testMetadataFromReference()
+	{
+		$container = $this->createContainer('metadata-from-reference');
+
+		/** @var Kdyby\Doctrine\EntityManager $default */
+		$default = $container->getByType(\Kdyby\Doctrine\EntityManager::class);
+		$entityClasses = array_map(function (ClassMetadata $class) {
+			return $class->getName();
+		}, $default->getMetadataFactory()->getAllMetadata());
+
+		Assert::contains(\KdybyTests\Doctrine\CmsArticle::class, $entityClasses);
+		Assert::notContains(\KdybyTests\Doctrine\Models2\Foo::class, $entityClasses);
+	}
+
+
+
+	public function testEntityMetadataMergingFromProvider()
+	{
+		$container = $this->createContainer('entity-provider-merging');
+
+		/** @var Kdyby\Doctrine\EntityManager $default */
+		$default = $container->getByType(\Kdyby\Doctrine\EntityManager::class);
+		$entityClasses = array_map(function (ClassMetadata $class) {
+			return $class->getName();
+		}, $default->getMetadataFactory()->getAllMetadata());
+
+		Assert::contains(\KdybyTests\Doctrine\CmsArticle::class, $entityClasses);
+		Assert::contains(\KdybyTests\Doctrine\Models2\Foo::class, $entityClasses);
+	}
+
+
+
+	public function testInheritance()
+	{
+		$container = $this->createContainer('entitymanager-decorator');
+
+		Assert::same(
+			$container->getService('kdyby.doctrine.registry')->getConnection('default'),
+			$container->getByType(\Kdyby\Doctrine\EntityManager::class)->getConnection()
+		);
+		Assert::same(
+			$container->getService('kdyby.doctrine.registry')->getConnection('remote'),
+			$container->getByType(\KdybyTests\DoctrineMocks\RemoteEntityManager::class)->getConnection()
+		);
+	}
+
+
+
+	public function testMetadataEmpty()
+	{
+		$container = $this->createContainer('metadata-empty');
+
+		/** @var Kdyby\Doctrine\EntityManager $default */
+		$default = $container->getByType(\Kdyby\Doctrine\EntityManager::class);
+		$entityClasses = array_map(function (ClassMetadata $class) {
+			return $class->getName();
+		}, $default->getMetadataFactory()->getAllMetadata());
+
+		Assert::contains(\KdybyTests\Doctrine\Models2\Foo::class, $entityClasses);
+	}
+
+
+
+	public function testProxyAutoloading()
+	{
+		$env = $_ENV + ['TEMP_DIR' => $scriptTempDir = TEMP_DIR . '/script'];
+		Nette\Utils\FileSystem::createDir($scriptTempDir . '/cache');
+		Nette\Utils\FileSystem::createDir($scriptTempDir . '/sessions');
+
+		$compileOutput = explode("\n", self::runExternalScript(__DIR__ . '/proxies-sessions-test/run.php', ['compile'], $env), 2);
+		Assert::same('compiled,proxies generated,schema generated', $compileOutput[0]);
+		$env['SESSION_ID'] = $sessionId = $compileOutput[1];
+
+		$storeOutput = self::runExternalScript(__DIR__ . '/proxies-sessions-test/run.php', ['store'], $env);
+		Assert::match(\Kdyby\Doctrine\DI\OrmExtension::DEFAULT_PROXY_NAMESPACE . '\__CG__\\' . \KdybyTests\Doctrine\CmsOrder::class . ' %A%id => 1%A%status => "new"%A%', $storeOutput);
+
+		$runOutput = self::runExternalScript(__DIR__ . '/proxies-sessions-test/run.php', ['read'], $env);
+		Assert::match(\Kdyby\Doctrine\DI\OrmExtension::DEFAULT_PROXY_NAMESPACE . '\__CG__\\' . \KdybyTests\Doctrine\CmsOrder::class . ' %A%id => 1%A%status => "new"%A%', $runOutput);
+	}
+
+
+
+	private static function runExternalScript($script, array $args, array $env)
+	{
+		static $spec = [
+			1 => ['pipe', 'w'],
+			2 => ['pipe', 'w'],
+		];
+		$cmd = sprintf('php %s %s', escapeshellarg(basename($script)), implode(' ', array_map('escapeshellarg', $args)));
+		$process = proc_open($cmd, $spec, $pipes, dirname($script), $env);
+
+		$output = stream_get_contents($pipes[1]); // wait for process
+		$error = stream_get_contents($pipes[2]);
+		if (proc_close($process) > 0) {
+			throw new \RuntimeException($error . "\n" . $output);
+		}
+
+		return $output;
 	}
 
 }
 
-\run(new ExtensionTest());
+(new ExtensionTest())->run();

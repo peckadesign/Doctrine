@@ -18,6 +18,8 @@ use Tester\Assert;
 
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/models/cms.php';
+require_once __DIR__ . '/models/sti.php';
+require_once __DIR__ . '/models/readonly.php';
 
 
 
@@ -29,7 +31,7 @@ class NonLockingUniqueInserterTest extends KdybyTests\Doctrine\ORMTestCase
 
 	public function testFunctional()
 	{
-		$em = $this->createMemoryManager();
+		$em = $this->createMemoryManagerWithSchema();
 
 		$user1 = new CmsUser();
 		$user1->username = 'HosipLan';
@@ -53,7 +55,7 @@ class NonLockingUniqueInserterTest extends KdybyTests\Doctrine\ORMTestCase
 		Assert::true($em->isOpen());
 		$em->clear();
 
-		list($h, $l) = $em->getDao(__NAMESPACE__ . '\CmsUser')->findAll();
+		list($h, $l) = $em->getRepository(\KdybyTests\Doctrine\CmsUser::class)->findAll();
 
 		Assert::true($h instanceof CmsUser);
 		Assert::equal('HosipLan', $h->username);
@@ -68,7 +70,7 @@ class NonLockingUniqueInserterTest extends KdybyTests\Doctrine\ORMTestCase
 
 	public function testSavingRelations()
 	{
-		$em = $this->createMemoryManager();
+		$em = $this->createMemoryManagerWithSchema();
 
 		$user = new CmsUser();
 		$user->username = 'HosipLan';
@@ -90,11 +92,47 @@ class NonLockingUniqueInserterTest extends KdybyTests\Doctrine\ORMTestCase
 		$em->clear();
 
 		/** @var CmsEmail $email */
-		$email = $em->getDao(__NAMESPACE__ . '\CmsEmail')->find($id);
+		$email = $em->getRepository(\KdybyTests\Doctrine\CmsEmail::class)->find($id);
 		Assert::true($email instanceof CmsEmail);
 		Assert::true($email->user instanceof CmsUser);
 	}
 
+
+
+	public function testSavingDiscriminatorColumn()
+	{
+		$em = $this->createMemoryManagerWithSchema();
+
+		$boss = new StiBoss('boss', 'Alfred Kelcey');
+
+		/** @var StiBoss $boss */
+		$boss = $em->safePersist($boss);
+		Assert::true($boss instanceof StiBoss);
+		Assert::true($em->isOpen());
+		$em->clear();
+
+		$row = $em->getConnection()->fetchAssoc('SELECT * FROM sti_users WHERE id = :id', [ 'id' => $boss->id ]);
+		Assert::equal('boss', $row['type']);
+	}
+
+
+
+	public function testSavingAllPropertiesOnReadOnlyEntities()
+	{
+		$em = $this->createMemoryManagerWithSchema();
+
+		$nonRequiredValue = 'nonRequired';
+		$requiredValue = 'required';
+
+		$entity = new ReadOnlyEntity(1, $nonRequiredValue, $requiredValue);
+		$em->safePersist($entity);
+		$em->clear();
+
+		$row = $em->getConnection()->fetchAssoc('SELECT * FROM read_only_entities WHERE id = :id', ['id' => 1]);
+		Assert::same($nonRequiredValue, $row['non_required']);
+		Assert::same($requiredValue, $row['required']);
+	}
+
 }
 
-\run(new NonLockingUniqueInserterTest());
+(new NonLockingUniqueInserterTest())->run();

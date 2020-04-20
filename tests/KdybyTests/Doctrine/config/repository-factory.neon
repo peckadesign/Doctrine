@@ -1,0 +1,26 @@
+kdyby.doctrine:
+	driver: pdo_sqlite
+	memory: true
+	metadata:
+		KdybyTests\Doctrine: annotations(%appDir%/Doctrine/models)
+	defaultRepositoryClassName: Kdyby\Doctrine\EntityRepository
+
+
+services:
+	cmsAddressRepository:
+		class: KdybyTests\Doctrine\CmsAddressRepository
+		tags:
+			doctrine.repositoryEntity: KdybyTests\Doctrine\CmsAddress
+
+	cmsArticleRepository:
+		class: KdybyTests\Doctrine\CmsArticleRepository
+		tags:
+			doctrine.repositoryEntity: KdybyTests\Doctrine\CmsArticle
+
+	-
+		class: KdybyTests\Doctrine\CmsEmployeeRepository
+		factory: @Kdyby\Doctrine\EntityManager::getRepository(KdybyTests\Doctrine\CmsEmployee)
+
+	-
+		class: KdybyTests\Doctrine\CmsGroupRepository
+		factory: @Kdyby\Doctrine\EntityManager::getDao(KdybyTests\Doctrine\CmsGroup)

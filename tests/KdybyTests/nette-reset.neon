@@ -1,42 +1,34 @@
-common:
-	php:
-		date.timezone: Europe/Prague
+php:
+	date.timezone: Europe/Prague
 
 
-	extensions:
-		events: Kdyby\Events\DI\EventsExtension
-		console: Kdyby\Console\DI\ConsoleExtension
-		annotations: Kdyby\Annotations\DI\AnnotationsExtension
-		kdyby.doctrine: Kdyby\Doctrine\DI\OrmExtension
+extensions:
+	kdyby.events: Kdyby\Events\DI\EventsExtension
+	kdyby.console: Kdyby\Console\DI\ConsoleExtension
+	kdyby.annotations: Kdyby\Annotations\DI\AnnotationsExtension
+	kdyby.doctrine: Kdyby\Doctrine\DI\OrmExtension
 
 
-	kdyby.doctrine:
-		metadataCache: array
-		queryCache: array
-		resultCache: array
-		hydrationCache: array
+kdyby.doctrine:
+	metadataCache: array
+	queryCache: array
+	resultCache: array
+	hydrationCache: array
 
 
-	console:
-		url: http://www.kdyby.org/
+kdyby.console:
+	url: http://www.kdyby.org/
 
 
-	services:
-		cacheStorage:
-			class: Nette\Caching\Storages\MemoryStorage
+http:
+	frames: null
 
 
-v22 < common:
-	nette:
-		security:
-			frames: null
+session:
+	autoStart: false
+	save_path: %tempDir%/sessions
 
-		session:
-			autoStart: false
 
-v23 < common:
-	http:
-		frames: null
-
-	session:
-		autoStart: false
+services:
+	cacheStorage:
+		class: Nette\Caching\Storages\MemoryStorage
