@@ -10,6 +10,7 @@
 - Kdyby\Doctrine\Console\Proxy\ImportCommand
 - Kdyby\Doctrine\Console\Proxy\InfoCommand
 - Kdyby\Doctrine\Console\Proxy\MappingDescribeCommand
+- Kdyby\Doctrine\Console\Proxy\ReservedWordsCommand
 - Kdyby\Doctrine\Console\Proxy\SchemaCreateCommand
 - Kdyby\Doctrine\Console\Proxy\SchemaUpdateCommand
 - Kdyby\Doctrine\Console\Proxy\SchemaDropCommand
