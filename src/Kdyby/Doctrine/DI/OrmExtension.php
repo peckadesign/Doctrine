@@ -208,7 +208,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 		$this->loadConsole();
 
 		$builder->addDefinition($this->prefix('registry'))
-			->setClass(Kdyby\Doctrine\Registry::class, [
+			->setFactory(Kdyby\Doctrine\Registry::class, [
 				$this->configuredConnections,
 				$this->configuredManagers,
 				$builder->parameters[$this->name]['dbal']['defaultConnection'],
@@ -295,7 +295,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 			$metadataDriver->addSetup('setDefaultDriver', [
 				new Statement($this->metadataDriverClasses[self::ANNOTATION_DRIVER], [
 					'@' . Doctrine\Common\Annotations\Reader::class,
-					[$builder->expand('%appDir%')]
+					[Nette\DI\Helpers::expand('%appDir%', $this->compiler->getContainerBuilder()->parameters)]
 				])
 			]);
 		}
@@ -362,7 +362,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 		}
 
 		$builder->addDefinition($this->prefix($name . '.evm'))
-			->setClass(Kdyby\Events\NamespacedEventManager::class, [Kdyby\Doctrine\Events::NS . '::'])
+			->setFactory(Kdyby\Events\NamespacedEventManager::class, [Kdyby\Doctrine\Events::NS . '::'])
 			->addSetup('$dispatchGlobalEvents', [TRUE]) // for BC
 			->setAutowired(FALSE);
 
@@ -398,23 +398,35 @@ class OrmExtension extends Nette\DI\CompilerExtension
 				->setAutowired(TRUE);
 		}
 
-		$builder->addDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
+		if (\method_exists($builder, 'addFactoryDefinition')) { //nette 3.0
+			$builder->addFactoryDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
+				->setImplement(IRepositoryFactory::class)
+				->setParameters([EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
+				->getResultDefinition()
+				->setFactory($config['defaultRepositoryClassName'])
+				->setArguments([new Code\PhpLiteral('$entityManager'), new Code\PhpLiteral('$classMetadata')])
+				->setAutowired(FALSE);
+		} else {
+			$builder->addDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
 				->setClass($config['defaultRepositoryClassName'])
 				->setImplement(IRepositoryFactory::class)
 				->setArguments([new Code\PhpLiteral('$entityManager'), new Code\PhpLiteral('$classMetadata')])
 				->setParameters([EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
 				->setAutowired(FALSE);
+		}
+
+
 
 		$builder->addDefinition($this->prefix($name . '.schemaValidator'))
-			->setClass(Doctrine\ORM\Tools\SchemaValidator::class, ['@' . $managerServiceId])
+			->setFactory(Doctrine\ORM\Tools\SchemaValidator::class, ['@' . $managerServiceId])
 			->setAutowired($isDefault);
 
 		$builder->addDefinition($this->prefix($name . '.schemaTool'))
-			->setClass(Doctrine\ORM\Tools\SchemaTool::class, ['@' . $managerServiceId])
+			->setFactory(Doctrine\ORM\Tools\SchemaTool::class, ['@' . $managerServiceId])
 			->setAutowired($isDefault);
 
 		$cacheCleaner = $builder->addDefinition($this->prefix($name . '.cacheCleaner'))
-			->setClass(Kdyby\Doctrine\Tools\CacheCleaner::class, ['@' . $managerServiceId])
+			->setFactory(Kdyby\Doctrine\Tools\CacheCleaner::class, ['@' . $managerServiceId])
 			->setAutowired($isDefault);
 
 		$builder->addDefinition($this->prefix($name . '.schemaManager'))
@@ -429,11 +441,11 @@ class OrmExtension extends Nette\DI\CompilerExtension
 
 		if ($isDefault) {
 			$builder->addDefinition($this->prefix('helper.entityManager'))
-				->setClass(EntityManagerHelper::class, ['@' . $managerServiceId])
+				->setFactory(EntityManagerHelper::class, ['@' . $managerServiceId])
 				->addTag(Kdyby\Console\DI\ConsoleExtension::HELPER_TAG, 'em');
 
 			$builder->addDefinition($this->prefix('helper.connection'))
-				->setClass(ConnectionHelper::class, [$connectionService])
+				->setFactory(ConnectionHelper::class, [$connectionService])
 				->addTag(Kdyby\Console\DI\ConsoleExtension::HELPER_TAG, 'db');
 
 			$builder->addAlias($this->prefix('schemaValidator'), $this->prefix($name . '.schemaValidator'));
@@ -471,7 +483,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 		}
 
 		$builder->addDefinition($this->prefix($name . '.cacheRegionsConfiguration'))
-			->setClass(Doctrine\ORM\Cache\RegionsConfiguration::class, [
+			->setFactory(Doctrine\ORM\Cache\RegionsConfiguration::class, [
 				$config['regions']['defaultLifetime'],
 				$config['regions']['defaultLockLifetime'],
 			])
@@ -710,14 +722,28 @@ class OrmExtension extends Nette\DI\CompilerExtension
 			}
 
 			$factoryServiceName = $this->prefix('repositoryFactory.' . $originalServiceName);
-			$factoryDef = $builder->addDefinition($factoryServiceName, $originalDef)
-				->setImplement(IRepositoryFactory::class)
-				->setParameters([Doctrine\ORM\EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
-				->setAutowired(FALSE);
-			$factoryStatement = $factoryDef->getFactory() ?: new Statement($factoryDef->getClass());
-			$factoryStatement->arguments[0] = new Code\PhpLiteral('$entityManager');
-			$factoryStatement->arguments[1] = new Code\PhpLiteral('$classMetadata');
-			$factoryDef->setArguments($factoryStatement->arguments);
+
+			if (\method_exists($builder, 'addFactoryDefinition')) { //nette 3.0
+				$factoryDef = $builder->addFactoryDefinition($factoryServiceName, $originalDef)
+					->setImplement(IRepositoryFactory::class)
+					->setParameters([Doctrine\ORM\EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
+					->setAutowired(FALSE)
+					->getResultDefinition()
+					->setFactory($originalDef->getFactory());
+				$factoryStatement = $originalDef->getFactory() ?: new Statement($originalDef->getFactory());
+				$factoryStatement->arguments[0] = new Code\PhpLiteral('$entityManager');
+				$factoryStatement->arguments[1] = new Code\PhpLiteral('$classMetadata');
+
+			} else {
+				$factoryDef = $builder->addDefinition($factoryServiceName, $originalDef)
+					->setImplement(IRepositoryFactory::class)
+					->setParameters([Doctrine\ORM\EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
+					->setAutowired(FALSE);
+				$factoryStatement = $factoryDef->getFactory() ?: new Statement($factoryDef->getClass());
+				$factoryStatement->arguments[0] = new Code\PhpLiteral('$entityManager');
+				$factoryStatement->arguments[1] = new Code\PhpLiteral('$classMetadata');
+				$factoryDef->setArguments($factoryStatement->arguments);
+			}
 
 			$boundManagers = $this->getServiceBoundManagers($originalDef);
 			Validators::assert($boundManagers, 'list:1', 'bound manager');
@@ -797,10 +823,10 @@ class OrmExtension extends Nette\DI\CompilerExtension
 	 */
 	private function resolveConfig(array $provided, array $defaults, array $diff = [])
 	{
-		return $this->getContainerBuilder()->expand(Nette\DI\Config\Helpers::merge(
+		return \Nette\DI\Helpers::expand(Nette\DI\Config\Helpers::merge(
 			array_diff_key($provided, array_diff_key($diff, $defaults)),
 			$defaults
-		));
+		), $this->compiler->getContainerBuilder()->parameters);
 	}
 
 
