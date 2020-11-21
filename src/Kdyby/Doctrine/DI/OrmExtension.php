@@ -26,6 +26,8 @@ use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Kdyby\Annotations\DI\AnnotationsExtension;
 use Doctrine\ORM\Tools\Console\Helper\EntityManagerHelper;
 use Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper;
+use Nette\DI\ContainerBuilder;
+use Nette\DI\ServiceDefinition;
 
 /**
  * @author Filip Procházka <filip@prochazka.su>
@@ -295,7 +297,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 			$metadataDriver->addSetup('setDefaultDriver', [
 				new Statement($this->metadataDriverClasses[self::ANNOTATION_DRIVER], [
 					'@' . Doctrine\Common\Annotations\Reader::class,
-					[Nette\DI\Helpers::expand('%appDir%', $this->compiler->getContainerBuilder()->parameters)]
+					[Nette\DI\Helpers::expand('%appDir%', $builder->parameters)]
 				])
 			]);
 		}
@@ -576,7 +578,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 		$this->configuredConnections[$name] = $connectionServiceId;
 
 		if (!is_bool($config['logging'])) {
-			$fileLogger = new Statement(Kdyby\Doctrine\Diagnostics\FileLogger::class, [$builder->expand($config['logging'])]);
+			$fileLogger = new Statement(Kdyby\Doctrine\Diagnostics\FileLogger::class, [Nette\DI\Helpers::expand($config['logging'], $builder->parameters)]);
 			$configuration->addSetup('$service->getSQLLogger()->addLogger(?)', [$fileLogger]);
 
 		} elseif ($config['logging']) {
@@ -702,7 +704,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 
 		if (!method_exists($builder, 'findByType')) {
 			foreach ($this->configuredManagers as $managerName => $_) {
-				$builder->getDefinition($this->prefix($managerName . '.repositoryFactory'))
+				$this->getServiceDefinition($builder, $this->prefix($managerName . '.repositoryFactory'))
 					->addSetup('setServiceIdsMap', [[], $this->prefix('repositoryFactory.' . $managerName . '.defaultRepositoryFactory')]);
 			}
 
@@ -724,7 +726,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 			$factoryServiceName = $this->prefix('repositoryFactory.' . $originalServiceName);
 
 			if (\method_exists($builder, 'addFactoryDefinition')) { //nette 3.0
-				$factoryDef = $builder->addFactoryDefinition($factoryServiceName, $originalDef)
+				$factoryDef = $builder->addFactoryDefinition($factoryServiceName)
 					->setImplement(IRepositoryFactory::class)
 					->setParameters([Doctrine\ORM\EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
 					->setAutowired(FALSE)
@@ -773,7 +775,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 		}
 
 		foreach ($this->configuredManagers as $managerName => $_) {
-			$builder->getDefinition($this->prefix($managerName . '.repositoryFactory'))
+			$this->getServiceDefinition($builder, $this->prefix($managerName . '.repositoryFactory'))
 				->addSetup('setServiceIdsMap', [
 					$serviceMap[$managerName],
 					$this->prefix('repositoryFactory.' . $managerName . '.defaultRepositoryFactory')
@@ -904,6 +906,13 @@ class OrmExtension extends Nette\DI\CompilerExtension
 		$keys = array_flip(array_reverse($keys, TRUE));
 		$array = array_merge($keys, $array);
 		return $array;
+	}
+
+	private function getServiceDefinition(ContainerBuilder $builder, string $name): ServiceDefinition
+	{
+		$definition = $builder->getDefinition($name);
+		assert($definition instanceof ServiceDefinition);
+		return $definition;
 	}
 
 }
