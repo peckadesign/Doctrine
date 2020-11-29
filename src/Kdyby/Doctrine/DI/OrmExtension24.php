@@ -159,7 +159,7 @@ class OrmExtension24 extends Nette\DI\CompilerExtension
 		$this->configuredManagers = [];
 
 		$extensions = array_filter($this->compiler->getExtensions(), function ($item) {
-			return $item instanceof AnnotationsExtension;
+			return $item instanceof \Kdyby\Annotations\DI\AnnotationsExtension24;
 		});
 		if (empty($extensions)) {
 			throw new Nette\Utils\AssertionException(sprintf("You should register %s before %s.", AnnotationsExtension::class, get_class($this)));
