@@ -24,15 +24,15 @@
 		"kdyby/console": "~2.7.1",
 		"kdyby/annotations": "^2.4@dev",
 		"kdyby/doctrine-cache": "^2.6.1",
-		"kdyby/strict-objects": "^1.0",
-		"nette/di": "^2.4@dev",
-		"nette/utils": "^2.5",
-		"nette/finder": "^2.5"
+		"kdyby/strict-objects": "^1.0 || ^2.0",
+		"nette/di": "^v2.4.17",
+		"nette/utils": "^v2.5.6",
+		"nette/finder": "^v2.5.2"
 	},
 	"require-dev": {
-		"nette/bootstrap": "^2.4@dev",
+		"nette/bootstrap": "^2.4",
 		"nette/caching": "^2.5.3",
-		"nette/http": "^2.4.7@dev",
+		"nette/http": "^2.4.7",
 		"tracy/tracy": "^2.4@dev",
 		"nette/tester": "^2.0"
 	},
@@ -49,5 +49,15 @@
 		"classmap": [
 			"tests/KdybyTests"
 		]
-	}
+	},
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/Jakub-Fajkus/DoctrineCache"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/Jakub-Fajkus/Annotations"
+		}
+	]
 }
