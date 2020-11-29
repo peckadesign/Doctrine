@@ -30,7 +30,7 @@ use Doctrine\DBAL\Tools\Console\Helper\ConnectionHelper;
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-class OrmExtension extends Nette\DI\CompilerExtension
+class OrmExtension24 extends Nette\DI\CompilerExtension
 {
 
 	const ANNOTATION_DRIVER = 'annotations';
@@ -608,7 +608,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 		}
 
 		$impl = $driver instanceof \stdClass ? $driver->value : ($driver instanceof Statement ? $driver->getEntity() : (string) $driver);
-		list($driver) = CacheHelpers::filterArgs($driver);
+		[$driver] = CacheHelpers::filterArgs($driver);
 		/** @var Statement $driver */
 
 		/** @var string $impl */
@@ -862,7 +862,7 @@ class OrmExtension extends Nette\DI\CompilerExtension
 	public static function register(Nette\Configurator $configurator)
 	{
 		$configurator->onCompile[] = function ($config, Nette\DI\Compiler $compiler) {
-			$compiler->addExtension('doctrine', new OrmExtension());
+			$compiler->addExtension('doctrine', new OrmExtension24());
 		};
 	}
 
