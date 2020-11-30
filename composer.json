@@ -23,7 +23,7 @@
 		"kdyby/events": "dev-master || ^3.1.1",
 		"kdyby/console": "dev-master || ~2.7.1",
 		"kdyby/annotations": "dev-master as 2.5.0",
-		"kdyby/doctrine-cache": "dev-master as 2.6.1",
+		"kdyby/doctrine-cache": "dev-master as 2.6.2",
 		"kdyby/strict-objects": "^1.0 || ^2.0",
 		"nette/di": "^v2.4.17",
 		"nette/utils": "^v2.5.6",
