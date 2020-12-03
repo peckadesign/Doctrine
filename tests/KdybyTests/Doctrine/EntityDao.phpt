@@ -129,6 +129,7 @@ class EntityDaoTest extends ORMTestCase
 			new CmsUser('a', 'old'),
 			new CmsUser('b', 'new'),
 		]);
+		$this->em->flush();
 
 		$this->em->clear();
 
