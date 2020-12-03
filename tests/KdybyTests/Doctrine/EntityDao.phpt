@@ -49,7 +49,9 @@ class EntityDaoTest extends ORMTestCase
 		$user->name = 'Filip Procházka';
 
 		$users = $this->em->getDao(\KdybyTests\Doctrine\CmsUser::class);
-		$newId = $users->save($user)->id;
+		$this->em->persist($user);
+		$this->em->flush();
+		$newId = $user->id;
 		Assert::match('%d%', $newId);
 
 		$this->em->clear();
@@ -79,7 +81,7 @@ class EntityDaoTest extends ORMTestCase
 
 		Assert::null($user->status);
 		$user->status = 'admin';
-		$users->save($user);
+		$this->em->flush($user);
 
 		$this->em->clear();
 
@@ -122,7 +124,7 @@ class EntityDaoTest extends ORMTestCase
 	public function testFindPairs()
 	{
 		$dao = $this->em->getDao(\KdybyTests\Doctrine\CmsUser::class);
-		$dao->save([
+		$this->em->persist([
 			new CmsUser('c', 'new'),
 			new CmsUser('a', 'old'),
 			new CmsUser('b', 'new'),
@@ -149,11 +151,14 @@ class EntityDaoTest extends ORMTestCase
 	public function testCountBy()
 	{
 		$dao = $this->em->getDao(\KdybyTests\Doctrine\CmsUser::class);
-		$dao->save([
+		$this->em->persist([
 			new CmsUser('c', 'new'),
 			new CmsUser('a', 'old'),
 			new CmsUser('b', 'new'),
 		]);
+
+		$this->em->flush();
+
 		Assert::same(2, $dao->countBy(['status' => 'new']));
 	}
 
