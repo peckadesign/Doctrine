@@ -16,7 +16,6 @@ use Kdyby\Doctrine\UnexpectedValueException;
 use Nette;
 use Nette\Utils\Callback;
 use Nette\Utils\ObjectHelpers;
-use Nette\Utils\ObjectMixin;
 
 
 
@@ -237,14 +236,6 @@ trait MagicAccessors
 			}
 		}
 
-		// extension methods
-		if ($cb = static::extensionMethod($name)) {
-			/** @var \Nette\Callback $cb */
-			array_unshift($args, $this);
-
-			return call_user_func_array($cb, $args);
-		}
-
 		throw MemberAccessException::undefinedMethodCall($this, $name);
 	}
 
@@ -263,31 +254,6 @@ trait MagicAccessors
 		ObjectHelpers::strictStaticCall(get_called_class(), $name);
 		return NULL;
 	}
-
-
-
-	/**
-	 * Adding method to class.
-	 *
-	 * @param  string $name method name
-	 * @param  callable $callback
-	 * @return mixed
-	 */
-	public static function extensionMethod($name, $callback = NULL)
-	{
-		if (strpos($name, '::') === FALSE) {
-			$class = get_called_class();
-		} else {
-			list($class, $name) = explode('::', $name);
-			$class = (new \ReflectionClass($class))->getName();
-		}
-		if ($callback === NULL) {
-			return ObjectMixin::getExtensionMethod($class, $name);
-		} else {
-			ObjectMixin::setExtensionMethod($class, $name, $callback);
-		}
-	}
-
 
 
 	/**
