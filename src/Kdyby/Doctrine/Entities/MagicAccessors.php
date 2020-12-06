@@ -227,7 +227,7 @@ trait MagicAccessors
 			if ($rp->isPublic() && !$rp->isStatic()) {
 				if (is_array($list = $this->$name) || $list instanceof \Traversable) {
 					foreach ($list as $handler) {
-						Callback::invokeArgs($handler, $args);
+						$handler($args);
 					}
 				} elseif ($list !== NULL) {
 					throw UnexpectedValueException::invalidEventValue($list, $this, $name);
