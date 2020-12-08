@@ -217,7 +217,7 @@ class DqlSelection implements \IteratorAggregate
 	public function where($cond)
 	{
 		$this->state = self::STATE_DIRTY;
-		$this->builder->where->addAnd(\func_get_args());
+		$this->builder->where->addAnd(...\func_get_args());
 
 		return $this;
 	}
@@ -231,7 +231,7 @@ class DqlSelection implements \IteratorAggregate
 	public function orWhere($cond)
 	{
 		$this->state = self::STATE_DIRTY;
-		$this->builder->where->addOr(\func_get_args());
+		$this->builder->where->addOr(...\func_get_args());
 
 
 		return $this;
@@ -260,7 +260,7 @@ class DqlSelection implements \IteratorAggregate
 	public function having($cond)
 	{
 		$this->state = self::STATE_DIRTY;
-		$this->builder->having->addAnd(\func_get_args());
+		$this->builder->having->addAnd(...\func_get_args());
 
 
 		return $this;
@@ -275,7 +275,7 @@ class DqlSelection implements \IteratorAggregate
 	public function orHaving($cond)
 	{
 		$this->state = self::STATE_DIRTY;
-		$this->builder->having->addOr(\func_get_args());
+		$this->builder->having->addOr(...\func_get_args());
 
 
 		return $this;
