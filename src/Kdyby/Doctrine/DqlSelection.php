@@ -319,7 +319,7 @@ class DqlSelection implements \IteratorAggregate
 	 */
 	public function setParameter($param, $value)
 	{
-		$this->builder->parameters[':' . ltrim($param, ':')] = new Parameter($param, $value);
+		$this->builder->parameters[':' . ltrim($param, ':')] = new Parameter($param, $value, \Doctrine\ORM\Query\ParameterTypeInferer::inferType($value));
 
 		return $this;
 	}
