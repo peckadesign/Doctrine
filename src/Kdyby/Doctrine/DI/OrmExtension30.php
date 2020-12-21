@@ -393,9 +393,9 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		if ($isDefault && ($config['defaultRepositoryClassName'] === Kdyby\Doctrine\EntityDao::class || is_subclass_of($config['defaultRepositoryClassName'], Kdyby\Doctrine\EntityDao::class, TRUE))) {
 			// syntax sugar for config
 			$builder->addDefinition($this->prefix('dao'))
-				->setClass($config['defaultRepositoryClassName'])
+				->setType($config['defaultRepositoryClassName'])
 				->setFactory('@' . Kdyby\Doctrine\EntityManager::class . '::getDao', [new Code\PhpLiteral('$entityName')])
-				->setParameters(['entityName']);
+				->setArguments(['entityName']);
 
 			// interface for models & presenters
 			$builder->addFactoryDefinition($this->prefix('daoFactory'))
@@ -408,11 +408,11 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			;
 		}
 
-		$builder->addFactoryDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
-			->setParameters([EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
-			->getResultDefinition()
-			->setFactory($config['defaultRepositoryClassName'])
+		$builder->addDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
+			->setClass($config['defaultRepositoryClassName'])
+			->setImplement(IRepositoryFactory::class)
 			->setArguments([new Code\PhpLiteral('$entityManager'), new Code\PhpLiteral('$classMetadata')])
+			->setParameters([EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
 			->setAutowired(FALSE);
 
 		$builder->addDefinition($this->prefix($name . '.schemaValidator'))
