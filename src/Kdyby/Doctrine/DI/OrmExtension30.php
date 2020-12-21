@@ -62,7 +62,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			'logging' => '%debugMode%',
 		],
 		'classMetadataFactory' => Kdyby\Doctrine\Mapping\ClassMetadataFactory::class,
-		'defaultRepositoryClassName' => Kdyby\Doctrine\EntityRepository::class,
+		'defaultRepositoryClassName' => Kdyby\Doctrine\EntityDao::class,
 		'repositoryFactoryClassName' => Kdyby\Doctrine\RepositoryFactory::class,
 		'queryBuilderClassName' => Kdyby\Doctrine\QueryBuilder::class,
 		'autoGenerateProxyClasses' => '%debugMode%',
@@ -158,10 +158,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		$this->managerConfigs =
 		$this->configuredManagers = [];
 
-		$extensions = array_filter($this->compiler->getExtensions(), function ($item) {
-			return $item instanceof \Kdyby\Annotations\DI\AnnotationsExtension;
-		});
-		if (empty($extensions)) {
+		if (!$this->compiler->getExtensions(AnnotationsExtension::class)) {
 			throw new Nette\Utils\AssertionException(sprintf("You should register %s before %s.", AnnotationsExtension::class, get_class($this)));
 		}
 
@@ -196,6 +193,10 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		}
 
 		if ($this->targetEntityMappings) {
+			if (!$this->isKdybyEventsPresent()) {
+				throw new Nette\Utils\AssertionException('The option \'targetEntityMappings\' requires \'Kdyby\Events\DI\EventsExtension\'.', E_USER_NOTICE);
+			}
+
 			$listener = $builder->addDefinition($this->prefix('resolveTargetEntityListener'))
 				->setClass(Kdyby\Doctrine\Tools\ResolveTargetEntityListener::class)
 				->addTag(Kdyby\Events\DI\EventsExtension::TAG_SUBSCRIBER);
@@ -208,7 +209,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		$this->loadConsole();
 
 		$builder->addDefinition($this->prefix('registry'))
-			->setClass(Kdyby\Doctrine\Registry::class, [
+			->setFactory(Kdyby\Doctrine\Registry::class, [
 				$this->configuredConnections,
 				$this->configuredManagers,
 				$builder->parameters[$this->name]['dbal']['defaultConnection'],
@@ -295,7 +296,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			$metadataDriver->addSetup('setDefaultDriver', [
 				new Statement($this->metadataDriverClasses[self::ANNOTATION_DRIVER], [
 					'@' . Doctrine\Common\Annotations\Reader::class,
-					[$builder->expand('%appDir%')]
+					[Nette\DI\Helpers::expand('%appDir%', $builder->parameters)]
 				])
 			]);
 		}
@@ -361,10 +362,17 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			$this->targetEntityMappings = Nette\Utils\Arrays::mergeTree($this->targetEntityMappings, $config['targetEntityMappings']);
 		}
 
-		$builder->addDefinition($this->prefix($name . '.evm'))
-			->setClass(Kdyby\Events\NamespacedEventManager::class, [Kdyby\Doctrine\Events::NS . '::'])
-			->addSetup('$dispatchGlobalEvents', [TRUE]) // for BC
-			->setAutowired(FALSE);
+		if ($this->isKdybyEventsPresent()) {
+			$builder->addDefinition($this->prefix($name . '.evm'))
+				->setFactory(Kdyby\Events\NamespacedEventManager::class, [Kdyby\Doctrine\Events::NS . '::'])
+				->addSetup('$dispatchGlobalEvents', [TRUE]) // for BC
+				->setAutowired(FALSE);
+
+		} else {
+			$builder->addDefinition($this->prefix($name . '.evm'))
+				->setClass('Doctrine\Common\EventManager')
+				->setAutowired(FALSE);
+		}
 
 		// entity manager
 		$entityManager = $builder->addDefinition($managerServiceId = $this->prefix($name . '.entityManager'))
@@ -390,31 +398,33 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 				->setParameters(['entityName']);
 
 			// interface for models & presenters
-			$builder->addDefinition($this->prefix('daoFactory'))
-				->setClass($config['defaultRepositoryClassName'])
-				->setFactory('@' . Kdyby\Doctrine\EntityManager::class . '::getDao', [new Code\PhpLiteral('$entityName')])
-				->setParameters(['entityName'])
+			$builder->addFactoryDefinition($this->prefix('daoFactory'))
 				->setImplement(Kdyby\Doctrine\EntityDaoFactory::class)
-				->setAutowired(TRUE);
+				->setAutowired(TRUE)
+				->setParameters(['entityName'])
+				->getResultDefinition()
+				->setType($config['defaultRepositoryClassName'])
+				->setFactory('@' . Kdyby\Doctrine\EntityManager::class . '::getDao', [new Code\PhpLiteral('$entityName')])
+			;
 		}
 
-		$builder->addDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
-				->setClass($config['defaultRepositoryClassName'])
-				->setImplement(IRepositoryFactory::class)
-				->setArguments([new Code\PhpLiteral('$entityManager'), new Code\PhpLiteral('$classMetadata')])
-				->setParameters([EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
-				->setAutowired(FALSE);
+		$builder->addFactoryDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
+			->setParameters([EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
+			->getResultDefinition()
+			->setFactory($config['defaultRepositoryClassName'])
+			->setArguments([new Code\PhpLiteral('$entityManager'), new Code\PhpLiteral('$classMetadata')])
+			->setAutowired(FALSE);
 
 		$builder->addDefinition($this->prefix($name . '.schemaValidator'))
-			->setClass(Doctrine\ORM\Tools\SchemaValidator::class, ['@' . $managerServiceId])
+			->setFactory(Doctrine\ORM\Tools\SchemaValidator::class, ['@' . $managerServiceId])
 			->setAutowired($isDefault);
 
 		$builder->addDefinition($this->prefix($name . '.schemaTool'))
-			->setClass(Doctrine\ORM\Tools\SchemaTool::class, ['@' . $managerServiceId])
+			->setFactory(Doctrine\ORM\Tools\SchemaTool::class, ['@' . $managerServiceId])
 			->setAutowired($isDefault);
 
 		$cacheCleaner = $builder->addDefinition($this->prefix($name . '.cacheCleaner'))
-			->setClass(Kdyby\Doctrine\Tools\CacheCleaner::class, ['@' . $managerServiceId])
+			->setFactory(Kdyby\Doctrine\Tools\CacheCleaner::class, ['@' . $managerServiceId])
 			->setAutowired($isDefault);
 
 		$builder->addDefinition($this->prefix($name . '.schemaManager'))
@@ -429,11 +439,11 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 
 		if ($isDefault) {
 			$builder->addDefinition($this->prefix('helper.entityManager'))
-				->setClass(EntityManagerHelper::class, ['@' . $managerServiceId])
+				->setFactory(EntityManagerHelper::class, ['@' . $managerServiceId])
 				->addTag(Kdyby\Console\DI\ConsoleExtension::HELPER_TAG, 'em');
 
 			$builder->addDefinition($this->prefix('helper.connection'))
-				->setClass(ConnectionHelper::class, [$connectionService])
+				->setFactory(ConnectionHelper::class, [$connectionService])
 				->addTag(Kdyby\Console\DI\ConsoleExtension::HELPER_TAG, 'db');
 
 			$builder->addAlias($this->prefix('schemaValidator'), $this->prefix($name . '.schemaValidator'));
@@ -495,9 +505,9 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			->addSetup('setCacheLogger', [$this->prefix('@' . $name . '.cacheLogger')])
 			->setAutowired($isDefault);
 
-		$configuration = $builder->getDefinition($this->prefix($name . '.ormConfiguration'));
-		$configuration->addSetup('setSecondLevelCacheEnabled');
-		$configuration->addSetup('setSecondLevelCacheConfiguration', ['@' . $cacheConfigName]);
+		$this->getServiceDefinition($builder, $this->prefix($name . '.ormConfiguration'))
+			->addSetup('setSecondLevelCacheEnabled')
+			->addSetup('setSecondLevelCacheConfiguration', ['@' . $cacheConfigName]);
 	}
 
 
@@ -564,7 +574,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		$this->configuredConnections[$name] = $connectionServiceId;
 
 		if (!is_bool($config['logging'])) {
-			$fileLogger = new Statement(Kdyby\Doctrine\Diagnostics\FileLogger::class, [$builder->expand($config['logging'])]);
+			$fileLogger = new Statement(Kdyby\Doctrine\Diagnostics\FileLogger::class, [Nette\DI\Helpers::expand($config['logging'], $builder->parameters)]);
 			$configuration->addSetup('$service->getSQLLogger()->addLogger(?)', [$fileLogger]);
 
 		} elseif ($config['logging']) {
@@ -690,7 +700,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 
 		if (!method_exists($builder, 'findByType')) {
 			foreach ($this->configuredManagers as $managerName => $_) {
-				$builder->getDefinition($this->prefix($managerName . '.repositoryFactory'))
+				$this->getServiceDefinition($builder, $this->prefix($managerName . '.repositoryFactory'))
 					->addSetup('setServiceIdsMap', [[], $this->prefix('repositoryFactory.' . $managerName . '.defaultRepositoryFactory')]);
 			}
 
@@ -797,10 +807,10 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 	 */
 	private function resolveConfig(array $provided, array $defaults, array $diff = [])
 	{
-		return $this->getContainerBuilder()->expand(Nette\DI\Config\Helpers::merge(
+		return Nette\DI\Helpers::expand(Nette\DI\Config\Helpers::merge(
 			array_diff_key($provided, array_diff_key($diff, $defaults)),
 			$defaults
-		));
+		), $this->compiler->getContainerBuilder()->parameters);
 	}
 
 
@@ -838,6 +848,16 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 	private function isTracyPresent()
 	{
 		return interface_exists(\Tracy\IBarPanel::class);
+	}
+
+
+
+	/**
+	 * @return bool
+	 */
+	private function isKdybyEventsPresent()
+	{
+		return (bool) $this->compiler->getExtensions(\Kdyby\Events\DI\EventsExtension::class);
 	}
 
 
