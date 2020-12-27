@@ -408,12 +408,15 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			;
 		}
 
-		$builder->addDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
-			->setClass($config['defaultRepositoryClassName'])
+		//todo: wtf? Nette\DI\ServiceCreationException: Service 'kdyby.doctrine.repositoryFactory.default.defaultRepositoryFactory' (type of Kdyby\Doctrine\DI\IRepositoryFactory): Service of type Kdyby\Doctrine\EntityDao: Service of type Doctrine\ORM\Mapping\ClassMetadata needed by $class in Doctrine\ORM\EntityRepository::__construct() not found. Did you add it to configuration file? in /var/www/html/vendor/nette/di/src/DI/Resolver.php:559
+		$builder->addFactoryDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
 			->setImplement(IRepositoryFactory::class)
-			->setArguments([new Code\PhpLiteral('$entityManager'), new Code\PhpLiteral('$classMetadata')])
-			->setParameters([EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
-			->setAutowired(FALSE);
+			->setAutowired(FALSE)
+			->getResultDefinition()
+			->setType($config['defaultRepositoryClassName'])
+			->setArguments([EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
+
+		;
 
 		$builder->addDefinition($this->prefix($name . '.schemaValidator'))
 			->setFactory(Doctrine\ORM\Tools\SchemaValidator::class, ['@' . $managerServiceId])
