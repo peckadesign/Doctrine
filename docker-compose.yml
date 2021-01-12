@@ -1,0 +1,16 @@
+
+version: '3'
+
+services:
+    web:
+        image: peckadesign/php:7.4-dev
+        ports:
+            - 80
+        volumes:
+            - ./:/var/www/html
+            - ./docker/web/php/php.ini:/usr/local/etc/php/conf.d/php.ini
+            - ./docker/web/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+
+        environment:
+            XDEBUG_CONFIG: "remote_host=192.168.2.105"
+            PHP_IDE_CONFIG: serverName=pdproject
