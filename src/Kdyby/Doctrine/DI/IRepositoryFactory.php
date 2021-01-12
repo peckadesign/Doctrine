@@ -24,10 +24,10 @@ interface IRepositoryFactory
 {
 
 	/**
-	 * @param ORM\EntityManagerInterface $entityManager
-	 * @param ORM\Mapping\ClassMetadata $classMetadata
+	 * @param ORM\EntityManagerInterface $em
+	 * @param ORM\Mapping\ClassMetadata $class
 	 * @return EntityRepository
 	 */
-	public function create(ORM\EntityManagerInterface $entityManager, ORM\Mapping\ClassMetadata $classMetadata);
+	public function create(ORM\EntityManagerInterface $em, ORM\Mapping\ClassMetadata $class);
 
 }
