@@ -691,7 +691,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 
 		$disabled = TRUE;
 		foreach ($this->configuredManagers as $managerName => $_) {
-			$factoryClassName = $builder->getDefinition($this->prefix($managerName . '.repositoryFactory'))->getClass();
+			$factoryClassName = $builder->getDefinition($this->prefix($managerName . '.repositoryFactory'))->getType();
 			if ($factoryClassName === Kdyby\Doctrine\RepositoryFactory::class || in_array(Kdyby\Doctrine\RepositoryFactory::class, class_parents($factoryClassName), TRUE)) {
 				$disabled = FALSE;
 			}
@@ -717,7 +717,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			}
 
 			$originalDefFactory = $originalDef->getFactory();
-			$factory = ($originalDefFactory !== NULL) ? $originalDefFactory->getEntity() : $originalDef->getClass();
+			$factory = ($originalDefFactory !== NULL) ? $originalDefFactory->getEntity() : $originalDef->getType();
 			if (stripos($factory, '::getRepository') !== FALSE || stripos($factory, '::getDao') !== FALSE) {
 				continue; // ignore
 			}
@@ -727,7 +727,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 				->setImplement(IRepositoryFactory::class)
 				->setParameters([Doctrine\ORM\EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
 				->setAutowired(FALSE);
-			$factoryStatement = $factoryDef->getFactory() ?: new Statement($factoryDef->getClass());
+			$factoryStatement = $factoryDef->getFactory() ?: new Statement($factoryDef->getType());
 			$factoryStatement->arguments[0] = new Code\PhpLiteral('$entityManager');
 			$factoryStatement->arguments[1] = new Code\PhpLiteral('$classMetadata');
 			$factoryDef->setArguments($factoryStatement->arguments);
@@ -737,7 +737,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 
 			if ($boundEntity = $originalDef->getTag(self::TAG_REPOSITORY_ENTITY)) {
 				if (!is_string($boundEntity) || !class_exists($boundEntity)) {
-					throw new Nette\Utils\AssertionException(sprintf('The entity "%s" for repository "%s" cannot be autoloaded.', $boundEntity, $originalDef->getClass()));
+					throw new Nette\Utils\AssertionException(sprintf('The entity "%s" for repository "%s" cannot be autoloaded.', $boundEntity, $originalDef->getType()));
 				}
 				$entityArgument = $boundEntity;
 
@@ -745,7 +745,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 				throw new Nette\Utils\AssertionException(sprintf(
 					'The magic auto-detection of entity for repository %s for %s was removed from Kdyby.' .
 					'You have to specify %s tag with classname of the related entity in order to use this feature.',
-					$originalDef->getClass(),
+					$originalDef->getType(),
 					IRepositoryFactory::class,
 					self::TAG_REPOSITORY_ENTITY
 				));
@@ -753,10 +753,10 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 
 			$builder->removeDefinition($originalServiceName);
 			$builder->addDefinition($originalServiceName)
-				->setType($originalDef->getClass())
+				->setType($originalDef->getType())
 				->setFactory(sprintf('@%s::getRepository', $this->configuredManagers[$boundManagers[0]]), [$entityArgument]);
 
-			$serviceMap[$boundManagers[0]][$originalDef->getClass()] = $factoryServiceName;
+			$serviceMap[$boundManagers[0]][$originalDef->getType()] = $factoryServiceName;
 		}
 
 		foreach ($this->configuredManagers as $managerName => $_) {
