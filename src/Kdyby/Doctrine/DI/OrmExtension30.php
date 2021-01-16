@@ -408,7 +408,6 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			;
 		}
 
-		//todo: wtf? Nette\DI\ServiceCreationException: Service 'kdyby.doctrine.repositoryFactory.default.defaultRepositoryFactory' (type of Kdyby\Doctrine\DI\IRepositoryFactory): Service of type Kdyby\Doctrine\EntityDao: Service of type Doctrine\ORM\Mapping\ClassMetadata needed by $class in Doctrine\ORM\EntityRepository::__construct() not found. Did you add it to configuration file? in /var/www/html/vendor/nette/di/src/DI/Resolver.php:559
 		$builder->addFactoryDefinition($this->prefix('repositoryFactory.' . $name . '.defaultRepositoryFactory'))
 			->setImplement(IRepositoryFactory::class)
 			->setAutowired(FALSE)
@@ -723,7 +722,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			}
 
 			$factoryServiceName = $this->prefix('repositoryFactory.' . $originalServiceName);
-			$factoryDef = $builder->addDefinition($factoryServiceName, $originalDef)
+			$factoryDef = $builder->addFactoryDefinition($factoryServiceName, $originalDef)
 				->setImplement(IRepositoryFactory::class)
 				->setParameters([Doctrine\ORM\EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
 				->setAutowired(FALSE);
