@@ -22,6 +22,10 @@ define('TEMP_DIR', __DIR__ . '/../tmp/' . (isset($_SERVER['argv']) ? md5(seriali
 // create temporary directory
 Tester\Helpers::purge(TEMP_DIR);
 
+putenv("TEMP_DIR=".TEMP_DIR);
+
+\Tracy\Debugger::$logDirectory = TEMP_DIR;
+
 $_SERVER = array_intersect_key($_SERVER, array_flip([
 	'PHP_SELF', 'SCRIPT_NAME', 'SERVER_ADDR', 'SERVER_SOFTWARE', 'HTTP_HOST', 'DOCUMENT_ROOT', 'OS', 'argc', 'argv',
 ]));
