@@ -443,11 +443,11 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		if ($isDefault) {
 			$builder->addDefinition($this->prefix('helper.entityManager'))
 				->setFactory(EntityManagerHelper::class, ['@' . $managerServiceId])
-				->addTag(Kdyby\Console\DI\ConsoleExtension::HELPER_TAG, 'em');
+				->addTag(Kdyby\Console\DI\ConsoleExtension::TAG_HELPER, 'em');
 
 			$builder->addDefinition($this->prefix('helper.connection'))
 				->setFactory(ConnectionHelper::class, [$connectionService])
-				->addTag(Kdyby\Console\DI\ConsoleExtension::HELPER_TAG, 'db');
+				->addTag(Kdyby\Console\DI\ConsoleExtension::TAG_HELPER, 'db');
 
 			$builder->addAlias($this->prefix('schemaValidator'), $this->prefix($name . '.schemaValidator'));
 			$builder->addAlias($this->prefix('schemaTool'), $this->prefix($name . '.schemaTool'));
