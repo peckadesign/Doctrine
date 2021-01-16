@@ -188,7 +188,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			}
 
 			/** @var mixed[] $emConfig */
-			$emConfig = Nette\DI\Config\Helpers::merge($emConfig, $defaults);
+			$emConfig = Nette\Schema\Helpers::merge($emConfig, $defaults);
 			$this->processEntityManager($name, $emConfig);
 		}
 
@@ -809,7 +809,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 	 */
 	private function resolveConfig(array $provided, array $defaults, array $diff = [])
 	{
-		return Nette\DI\Helpers::expand(Nette\DI\Config\Helpers::merge(
+		return Nette\DI\Helpers::expand(Nette\Schema\Helpers::merge(
 			array_diff_key($provided, array_diff_key($diff, $defaults)),
 			$defaults
 		), $this->compiler->getContainerBuilder()->parameters);
