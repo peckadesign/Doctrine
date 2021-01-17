@@ -595,7 +595,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 	 * @throws \Nette\Utils\AssertionException
 	 * @return string
 	 */
-	protected function processMetadataDriver(Nette\DI\ServiceDefinition $metadataDriver, $namespace, $driver, $prefix)
+	protected function processMetadataDriver(Nette\DI\Definitions\ServiceDefinition $metadataDriver, $namespace, $driver, $prefix)
 	{
 		if (!is_string($namespace) || !Strings::match($namespace, '#^' . self::PHP_NAMESPACE . '\z#')) {
 			throw new Nette\Utils\AssertionException("The metadata namespace expects to be valid namespace, $namespace given.");
@@ -769,10 +769,10 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 
 
 	/**
-	 * @param Nette\DI\ServiceDefinition $def
+	 * @param Nette\DI\Definitions\ServiceDefinition $def
 	 * @return string[]
 	 */
-	protected function getServiceBoundManagers(Nette\DI\ServiceDefinition $def)
+	protected function getServiceBoundManagers(Nette\DI\Definitions\ServiceDefinition $def)
 	{
 		$builder = $this->getContainerBuilder();
 		$boundManagers = $def->getTag(self::TAG_BIND_TO_MANAGER);
