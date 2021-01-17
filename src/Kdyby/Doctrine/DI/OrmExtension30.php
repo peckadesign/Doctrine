@@ -725,7 +725,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 				->setImplement(IRepositoryFactory::class)
 				->setParameters([Doctrine\ORM\EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
 				->setAutowired(FALSE);
-			$factoryStatement = $factoryDef->getFactory() ?: new Nette\DI\Definitions\Statement($factoryDef->getType());
+			$factoryStatement = $factoryDef->getResultDefinition()->getFactory() ?: new Nette\DI\Definitions\Statement($factoryDef->getType());
 			$factoryStatement->arguments[0] = new Code\PhpLiteral('$entityManager');
 			$factoryStatement->arguments[1] = new Code\PhpLiteral('$classMetadata');
 			$factoryDef->setArguments($factoryStatement->arguments);
