@@ -728,7 +728,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			$factoryStatement = $factoryDef->getResultDefinition()->getFactory() ?: new Nette\DI\Definitions\Statement($factoryDef->getType());
 			$factoryStatement->arguments[0] = new Code\PhpLiteral('$entityManager');
 			$factoryStatement->arguments[1] = new Code\PhpLiteral('$classMetadata');
-			$factoryDef->setArguments($factoryStatement->arguments);
+			$factoryDef->getResultDefinition()->setArguments()($factoryStatement->arguments);
 
 			$boundManagers = $this->getServiceBoundManagers($originalDef);
 			Validators::assert($boundManagers, 'list:1', 'bound manager');
