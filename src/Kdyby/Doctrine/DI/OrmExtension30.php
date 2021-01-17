@@ -250,7 +250,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		$metadataDriver = $builder->addDefinition($this->prefix($name . '.metadataDriver'))
 			->setType(Doctrine\Common\Persistence\Mapping\Driver\MappingDriverChain::class)
 			->setAutowired(FALSE);
-		/** @var \Nette\DI\ServiceDefinition $metadataDriver */
+		/** @var \Nette\DI\Definitions\ServiceDefinition $metadataDriver */
 
 		Validators::assertField($config, 'metadata', 'array');
 		Validators::assertField($config, 'targetEntityMappings', 'array');
@@ -343,7 +343,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			->addSetup('setQuoteStrategy', CacheHelpers::filterArgs($config['quoteStrategy']))
 			->addSetup('setEntityListenerResolver', CacheHelpers::filterArgs($config['entityListenerResolver']))
 			->setAutowired(FALSE);
-		/** @var Nette\DI\ServiceDefinition $configuration */
+		/** @var Nette\DI\Definitions\ServiceDefinition $configuration */
 
 		$this->proxyAutoloaders[$config['proxyNamespace']] = $config['proxyDir'];
 
@@ -570,7 +570,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 			$connection->addSetup('$panel = ?->bindConnection(?)', [$this->prefix('@' . $name . '.diagnosticsPanel'), '@self']);
 		}
 
-		/** @var Nette\DI\ServiceDefinition $connection */
+		/** @var Nette\DI\Definitions\ServiceDefinition $connection */
 
 		$this->configuredConnections[$name] = $connectionServiceId;
 
@@ -588,7 +588,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 
 
 	/**
-	 * @param \Nette\DI\ServiceDefinition $metadataDriver
+	 * @param \Nette\DI\Definitions\ServiceDefinition $metadataDriver
 	 * @param string $namespace
 	 * @param string|array|\stdClass $driver
 	 * @param string $prefix
@@ -901,4 +901,9 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		return $array;
 	}
 
+
+	private function getServiceDefinition(Nette\DI\ContainerBuilder $builder, string $name): Nette\DI\Definitions\ServiceDefinition
+	{
+		return $builder->getDefinition($name);
+	}
 }
