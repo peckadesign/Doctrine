@@ -902,7 +902,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 	}
 
 
-	private function getServiceDefinition(Nette\DI\ContainerBuilder $builder, string $name): Nette\DI\Definitions\ServiceDefinition
+	private function getServiceDefinition(Nette\DI\ContainerBuilder $builder, string $name): Nette\DI\Definitions\Definition
 	{
 		return $builder->getDefinition($name);
 	}
