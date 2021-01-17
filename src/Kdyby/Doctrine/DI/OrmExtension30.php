@@ -17,7 +17,6 @@ use Doctrine\ORM\Repository\DefaultRepositoryFactory;
 use Kdyby;
 use Kdyby\DoctrineCache\DI\Helpers as CacheHelpers;
 use Nette;
-use Nette\DI\Statement;
 use Nette\PhpGenerator as Code;
 use Nette\PhpGenerator\Method;
 use Nette\Utils\Strings;
@@ -294,7 +293,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 
 		if (empty($config['metadata'])) {
 			$metadataDriver->addSetup('setDefaultDriver', [
-				new Statement($this->metadataDriverClasses[self::ANNOTATION_DRIVER], [
+				new Nette\DI\Definitions\Statement($this->metadataDriverClasses[self::ANNOTATION_DRIVER], [
 					'@' . Doctrine\Common\Annotations\Reader::class,
 					[Nette\DI\Helpers::expand('%appDir%', $builder->parameters)]
 				])
@@ -497,7 +496,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		if ($config['logging']) {
 			$logger->addSetup('setLogger', [
 				'statistics',
-				new Statement(Doctrine\ORM\Cache\Logging\StatisticsCacheLogger::class)
+				new Nette\DI\Definitions\Statement(Doctrine\ORM\Cache\Logging\StatisticsCacheLogger::class)
 			]);
 		}
 
@@ -531,7 +530,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		$configuration = $builder->addDefinition($this->prefix($name . '.dbalConfiguration'))
 			->setType(Doctrine\DBAL\Configuration::class)
 			->addSetup('setResultCacheImpl', [$this->processCache($config['resultCache'], $name . '.dbalResult')])
-			->addSetup('setSQLLogger', [new Statement(Doctrine\DBAL\Logging\LoggerChain::class)])
+			->addSetup('setSQLLogger', [new Nette\DI\Definitions\Statement(Doctrine\DBAL\Logging\LoggerChain::class)])
 			->addSetup('setFilterSchemaAssetsExpression', [$config['schemaFilter']])
 			->setAutowired(FALSE);
 
@@ -576,7 +575,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 		$this->configuredConnections[$name] = $connectionServiceId;
 
 		if (!is_bool($config['logging'])) {
-			$fileLogger = new Statement(Kdyby\Doctrine\Diagnostics\FileLogger::class, [Nette\DI\Helpers::expand($config['logging'], $builder->parameters)]);
+			$fileLogger = new Nette\DI\Definitions\Statement(Kdyby\Doctrine\Diagnostics\FileLogger::class, [Nette\DI\Helpers::expand($config['logging'], $builder->parameters)]);
 			$configuration->addSetup('$service->getSQLLogger()->addLogger(?)', [$fileLogger]);
 
 		} elseif ($config['logging']) {
@@ -616,16 +615,16 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 				}
 			}
 
-			$driver = new Statement(self::ANNOTATION_DRIVER, is_array($paths) ? $paths : [$paths]);
+			$driver = new Nette\DI\Definitions\Statement(self::ANNOTATION_DRIVER, is_array($paths) ? $paths : [$paths]);
 		}
 
-		$impl = $driver instanceof \stdClass ? $driver->value : ($driver instanceof Statement ? $driver->getEntity() : (string) $driver);
+		$impl = $driver instanceof \stdClass ? $driver->value : ($driver instanceof Nette\DI\Definitions\Statement ? $driver->getEntity() : (string) $driver);
 		[$driver] = CacheHelpers::filterArgs($driver);
-		/** @var Statement $driver */
+		/** @var Nette\DI\Definitions\Statement $driver */
 
 		/** @var string $impl */
 		if (isset($this->metadataDriverClasses[$impl])) {
-			$driver = new Statement($this->metadataDriverClasses[$impl], $driver->arguments);
+			$driver = new Nette\DI\Definitions\Statement($this->metadataDriverClasses[$impl], $driver->arguments);
 		}
 
 		if (is_string($driver->getEntity()) && substr($driver->getEntity(), 0, 1) === '@') {
@@ -726,7 +725,7 @@ class OrmExtension30 extends Nette\DI\CompilerExtension
 				->setImplement(IRepositoryFactory::class)
 				->setParameters([Doctrine\ORM\EntityManagerInterface::class . ' entityManager', Doctrine\ORM\Mapping\ClassMetadata::class . ' classMetadata'])
 				->setAutowired(FALSE);
-			$factoryStatement = $factoryDef->getFactory() ?: new Statement($factoryDef->getType());
+			$factoryStatement = $factoryDef->getFactory() ?: new Nette\DI\Definitions\Statement($factoryDef->getType());
 			$factoryStatement->arguments[0] = new Code\PhpLiteral('$entityManager');
 			$factoryStatement->arguments[1] = new Code\PhpLiteral('$classMetadata');
 			$factoryDef->setArguments($factoryStatement->arguments);
