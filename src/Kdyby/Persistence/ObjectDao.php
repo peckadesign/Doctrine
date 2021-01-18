@@ -17,7 +17,7 @@ use Doctrine;
 /**
  * @author Filip Procházka <filip@prochazka.su>
  */
-interface ObjectDao extends Doctrine\Common\Persistence\ObjectRepository
+interface ObjectDao extends Doctrine\Persistence\ObjectRepository
 {
 
 	const FLUSH = TRUE;

@@ -279,7 +279,7 @@ class EntityManager extends Doctrine\ORM\EntityManager implements Persistence\Qu
 	/**
 	 * @deprecated
 	 */
-	public function onDaoCreate(EntityManager $em, Doctrine\Common\Persistence\ObjectRepository $dao)
+	public function onDaoCreate(EntityManager $em, Doctrine\Persistence\ObjectRepository $dao)
 	{
 		foreach ($this->onDaoCreate as $callback) {
 			call_user_func_array($callback, func_get_args());
