@@ -20,20 +20,20 @@
 		"php": "^7.4",
 		"doctrine/orm": "~2.5",
 		"doctrine/dbal": "~2.5",
-		"kdyby/events": "dev-master || ^3.1.1",
-		"kdyby/console": "dev-master || ~2.7.1",
-		"kdyby/annotations": "dev-master as 2.5.0",
-		"kdyby/doctrine-cache": "dev-master as 2.6.2",
+		"kdyby/events": "dev-master",
+		"kdyby/console": "~2.8.0",
+		"kdyby/annotations": "~3.0.1",
+		"kdyby/doctrine-cache": "~3.0.0",
 		"kdyby/strict-objects": "^1.0 || ^2.0",
-		"nette/di": "^2.4 || ^3.0",
-		"nette/utils": "^2.5 || ^3.0",
+		"nette/di": "^3.0",
+		"nette/utils": "^3.0",
 		"nette/finder": "^2.5",
-		"tracy/tracy": "2.6.7"
+		"tracy/tracy": "~2.6"
 	},
 	"require-dev": {
-		"nette/bootstrap": "^2.4 || ^3.0",
-		"nette/caching": "^2.5.3 || ^3.0",
-		"nette/http": "^2.4.7 || ^3.0",
+		"nette/bootstrap": "^3.0",
+		"nette/caching": "^3.0",
+		"nette/http": "^3.0",
 		"nette/tester": "^2.0"
 	},
 	"autoload": {
@@ -49,15 +49,5 @@
 		"classmap": [
 			"tests/KdybyTests"
 		]
-	},
-	"repositories": [
-		{
-			"type": "vcs",
-			"url": "https://github.com/Jakub-Fajkus/DoctrineCache"
-		},
-		{
-			"type": "vcs",
-			"url": "https://github.com/Jakub-Fajkus/Annotations"
-		}
-	]
+	}
 }
